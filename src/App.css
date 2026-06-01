@@ -37,6 +37,45 @@
   line-height: 1.35;
 }
 
+.gallery-loading {
+  position: fixed;
+  inset: 0;
+  z-index: 20;
+  display: grid;
+  align-content: center;
+  justify-items: center;
+  gap: 12px;
+  padding: 24px;
+  color: #24211c;
+  background: #f4f1ea;
+}
+
+.gallery-loading strong {
+  font-size: 1rem;
+  line-height: 1.25;
+}
+
+.gallery-loading span {
+  color: #655f55;
+  font-size: 0.86rem;
+  line-height: 1.2;
+}
+
+.gallery-loading__bar {
+  width: min(320px, calc(100vw - 48px));
+  height: 6px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: rgba(41, 35, 24, 0.14);
+}
+
+.gallery-loading__bar div {
+  height: 100%;
+  border-radius: inherit;
+  background: #24211c;
+  transition: width 0.18s ease;
+}
+
 .artwork-focus {
   position: fixed;
   inset: 0;

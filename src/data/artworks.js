@@ -1,25 +1,25 @@
 const artworkFiles = [
-  '1.jpeg',
-  '2.jpeg',
-  '3.jpeg',
-  '4.jpeg',
-  '5.jpeg',
-  '6.jpeg',
-  '7.jpeg',
-  '8.jpeg',
-  '9.jpeg',
-  '10.jpeg',
-  '11.jpeg',
-  '13.jpeg',
-  '14.jpeg',
-  '15.jpeg',
-  '16.jpeg',
-  '17.jpeg',
-  '18.jpeg',
-  '19.jpeg',
-  '20.jpeg',
-  '21.jpeg',
-  '22.jpeg',
+  { fileName: '1.jpeg', width: 768, height: 1024 },
+  { fileName: '2.jpeg', width: 3024, height: 4032 },
+  { fileName: '3.jpeg', width: 3024, height: 4032 },
+  { fileName: '4.jpeg', width: 3024, height: 4032 },
+  { fileName: '5.jpeg', width: 3024, height: 4032 },
+  { fileName: '6.jpeg', width: 3024, height: 4032 },
+  { fileName: '7.jpeg', width: 3024, height: 4032 },
+  { fileName: '8.jpeg', width: 4032, height: 3024 },
+  { fileName: '9.jpeg', width: 4032, height: 3024 },
+  { fileName: '10.jpeg', width: 4032, height: 3024 },
+  { fileName: '11.jpeg', width: 4032, height: 3024 },
+  { fileName: '13.jpeg', width: 4032, height: 3024 },
+  { fileName: '14.jpeg', width: 4032, height: 3024 },
+  { fileName: '15.jpeg', width: 4032, height: 3024 },
+  { fileName: '16.jpeg', width: 4032, height: 3024 },
+  { fileName: '17.jpeg', width: 4032, height: 3024 },
+  { fileName: '18.jpeg', width: 4032, height: 3024 },
+  { fileName: '19.jpeg', width: 4032, height: 3024 },
+  { fileName: '20.jpeg', width: 3024, height: 4032 },
+  { fileName: '21.jpeg', width: 3024, height: 4032 },
+  { fileName: '22.jpeg', width: 3024, height: 4032 },
 ]
 
 const placements = [
@@ -51,9 +51,13 @@ const placements = [
   { position: [4, 2.05, 12.82], rotation: [0, Math.PI, 0] },
 ]
 
-export const artworks = artworkFiles.map((fileName, index) => ({
+export const initialArtworkIds = ['1', '2', '3', '4', '5', '20', '21', '22']
+
+export const artworks = artworkFiles.map(({ fileName, width, height }, index) => ({
   id: fileName.replace('.jpeg', ''),
   title: `Artwork ${fileName.replace('.jpeg', '')}`,
   image: `/artworks/${fileName}`,
+  width,
+  height,
   ...placements[index],
 }))

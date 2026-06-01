@@ -5,11 +5,12 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { ACESFilmicToneMapping, Color, Fog, MathUtils, Vector3 } from 'three'
 import ArtworkFrame from '../components/ArtworkFrame'
 import GalleryRoom from '../components/GalleryRoom'
-import { artworks } from '../data/artworks'
+import { artworks, initialArtworkIds } from '../data/artworks'
 
 const WALK_SPEED = 4.2
 const EYE_HEIGHT = 1.7
 const LOOK_SENSITIVITY = 0.004
+const TEXTURE_LOAD_DISTANCE = 24
 const ROOM_LIMITS = {
   x: 31.5,
   zMin: -25.5,
@@ -192,7 +193,9 @@ function MobileTouchNavigation() {
 }
 
 export default function GalleryScene({ isTouchNavigation = false, onArtworkSelect }) {
-  const { gl, scene } = useThree()
+  const { camera, gl, scene } = useThree()
+  const loadCheckElapsed = useRef(0)
+  const [loadedArtworkIds, setLoadedArtworkIds] = useState(() => new Set(initialArtworkIds))
 
   useEffect(() => {
     gl.toneMapping = ACESFilmicToneMapping
@@ -200,6 +203,31 @@ export default function GalleryScene({ isTouchNavigation = false, onArtworkSelec
     scene.background = new Color('#f4f1ea')
     scene.fog = new Fog('#f4f1ea', 22, 58)
   }, [gl, scene])
+
+  useFrame((_, delta) => {
+    loadCheckElapsed.current += delta
+    if (loadCheckElapsed.current < 0.35) return
+
+    loadCheckElapsed.current = 0
+    const nextLoadedArtworkIds = new Set(loadedArtworkIds)
+
+    artworks.forEach((artwork) => {
+      if (nextLoadedArtworkIds.has(artwork.id)) return
+
+      const distance = Math.hypot(
+        artwork.position[0] - camera.position.x,
+        artwork.position[2] - camera.position.z,
+      )
+
+      if (distance <= TEXTURE_LOAD_DISTANCE) {
+        nextLoadedArtworkIds.add(artwork.id)
+      }
+    })
+
+    if (nextLoadedArtworkIds.size !== loadedArtworkIds.size) {
+      setLoadedArtworkIds(nextLoadedArtworkIds)
+    }
+  })
 
   return (
     <>
@@ -220,7 +248,12 @@ export default function GalleryScene({ isTouchNavigation = false, onArtworkSelec
       <GalleryRoom />
 
       {artworks.map((artwork) => (
-        <ArtworkFrame key={artwork.id} artwork={artwork} onSelect={onArtworkSelect} />
+        <ArtworkFrame
+          key={artwork.id}
+          artwork={artwork}
+          onSelect={onArtworkSelect}
+          shouldLoadTexture={loadedArtworkIds.has(artwork.id)}
+        />
       ))}
 
       {isTouchNavigation && <MobileTouchNavigation />}

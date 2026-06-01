@@ -2,7 +2,7 @@ import { Canvas } from '@react-three/fiber'
 import { KeyboardControls } from '@react-three/drei'
 import { Suspense, useEffect, useState } from 'react'
 import GalleryScene from './scenes/GalleryScene'
-import { artworks } from './data/artworks'
+import { artworks, initialArtworkIds } from './data/artworks'
 import './App.css'
 
 const keyboardMap = [
@@ -11,6 +11,8 @@ const keyboardMap = [
   { name: 'leftward', keys: ['KeyA', 'ArrowLeft'] },
   { name: 'rightward', keys: ['KeyD', 'ArrowRight'] },
 ]
+const initialArtworkSet = new Set(initialArtworkIds)
+const initialArtworks = artworks.filter((artwork) => initialArtworkSet.has(artwork.id))
 
 function useTouchNavigation() {
   const [isTouchNavigation, setIsTouchNavigation] = useState(false)
@@ -28,8 +30,45 @@ function useTouchNavigation() {
   return isTouchNavigation
 }
 
+function useInitialArtworkPreload() {
+  const [progress, setProgress] = useState(0)
+
+  useEffect(() => {
+    let isMounted = true
+    let loadedCount = 0
+
+    const updateProgress = () => {
+      loadedCount += 1
+      if (isMounted) {
+        setProgress(Math.round((loadedCount / initialArtworks.length) * 100))
+      }
+    }
+
+    initialArtworks.forEach((artwork) => {
+      const image = new Image()
+
+      image.onload = async () => {
+        try {
+          await image.decode?.()
+        } finally {
+          updateProgress()
+        }
+      }
+      image.onerror = updateProgress
+      image.src = artwork.image
+    })
+
+    return () => {
+      isMounted = false
+    }
+  }, [])
+
+  return progress
+}
+
 function App() {
   const isTouchNavigation = useTouchNavigation()
+  const initialLoadProgress = useInitialArtworkPreload()
   const [selectedArtwork, setSelectedArtwork] = useState(null)
   const selectedArtworkIndex = selectedArtwork
     ? artworks.findIndex((artwork) => artwork.id === selectedArtwork.id)
@@ -74,6 +113,16 @@ function App() {
             : 'Click to look around. WASD to walk. Approach artworks to reveal plaques.'}
         </span>
       </div>
+
+      {initialLoadProgress < 100 && (
+        <div className="gallery-loading" role="status" aria-live="polite">
+          <strong>Loading ArtDay Virtual Gallery</strong>
+          <span>{initialLoadProgress}%</span>
+          <div className="gallery-loading__bar">
+            <div style={{ width: `${initialLoadProgress}%` }} />
+          </div>
+        </div>
+      )}
 
       {selectedArtwork && (
         <div

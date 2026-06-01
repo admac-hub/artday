@@ -1,5 +1,6 @@
 import { useTexture } from '@react-three/drei'
-import { useMemo, useRef } from 'react'
+import { Suspense, useMemo, useRef } from 'react'
+import { LinearFilter, SRGBColorSpace } from 'three'
 
 const TAP_LIMIT = 10
 
@@ -13,12 +14,38 @@ function getPointerPosition(event) {
   }
 }
 
-export default function ArtworkFrame({ artwork, onSelect }) {
-  const texture = useTexture(artwork.image)
+function optimizeArtworkTexture(texture) {
+  texture.colorSpace = SRGBColorSpace
+  texture.generateMipmaps = false
+  texture.minFilter = LinearFilter
+  texture.magFilter = LinearFilter
+}
+
+function ArtworkImage({ artwork, imageWidth, imageHeight }) {
+  const texture = useTexture(artwork.image, optimizeArtworkTexture)
+
+  return (
+    <mesh position={[0, 0, 0.065]} castShadow>
+      <planeGeometry args={[imageWidth, imageHeight]} />
+      <meshBasicMaterial map={texture} />
+    </mesh>
+  )
+}
+
+function ArtworkImageFallback({ imageWidth, imageHeight }) {
+  return (
+    <mesh position={[0, 0, 0.065]} castShadow>
+      <planeGeometry args={[imageWidth, imageHeight]} />
+      <meshBasicMaterial color="#d8d0bf" />
+    </mesh>
+  )
+}
+
+export default function ArtworkFrame({ artwork, onSelect, shouldLoadTexture = true }) {
   const activePointer = useRef(null)
 
   const { imageWidth, imageHeight, frameWidth, frameHeight } = useMemo(() => {
-    const aspect = texture.image ? texture.image.width / texture.image.height : 1
+    const aspect = artwork.width / artwork.height
     const maxWidth = 1.75
     const maxHeight = 2
     const imageWidth = aspect >= 1 ? maxWidth : maxHeight * aspect
@@ -31,7 +58,7 @@ export default function ArtworkFrame({ artwork, onSelect }) {
       frameWidth: imageWidth + border * 2,
       frameHeight: imageHeight + border * 2,
     }
-  }, [texture.image])
+  }, [artwork.height, artwork.width])
 
   const handlePointerDown = (event) => {
     event.stopPropagation()
@@ -89,10 +116,13 @@ export default function ArtworkFrame({ artwork, onSelect }) {
         <meshStandardMaterial color="#d8d0bf" roughness={0.74} />
       </mesh>
 
-      <mesh position={[0, 0, 0.065]} castShadow>
-        <planeGeometry args={[imageWidth, imageHeight]} />
-        <meshBasicMaterial map={texture} />
-      </mesh>
+      <Suspense fallback={<ArtworkImageFallback imageWidth={imageWidth} imageHeight={imageHeight} />}>
+        {shouldLoadTexture ? (
+          <ArtworkImage artwork={artwork} imageWidth={imageWidth} imageHeight={imageHeight} />
+        ) : (
+          <ArtworkImageFallback imageWidth={imageWidth} imageHeight={imageHeight} />
+        )}
+      </Suspense>
 
       <mesh position={[0, frameHeight / 2 - 0.04, 0.085]} castShadow>
         <boxGeometry args={[frameWidth, 0.08, 0.12]} />
