@@ -1,6 +1,5 @@
 import { useTexture } from '@react-three/drei'
 import { Suspense, useMemo, useRef } from 'react'
-import { LinearFilter, SRGBColorSpace } from 'three'
 
 const TAP_LIMIT = 10
 
@@ -14,15 +13,8 @@ function getPointerPosition(event) {
   }
 }
 
-function optimizeArtworkTexture(texture) {
-  texture.colorSpace = SRGBColorSpace
-  texture.generateMipmaps = false
-  texture.minFilter = LinearFilter
-  texture.magFilter = LinearFilter
-}
-
 function ArtworkImage({ artwork, imageWidth, imageHeight }) {
-  const texture = useTexture(artwork.image, optimizeArtworkTexture)
+  const texture = useTexture(artwork.image)
 
   return (
     <mesh position={[0, 0, 0.065]} castShadow>
